@@ -1,0 +1,180 @@
+# coding: utf-8
+
+"""
+Jeu du Memory
+Script Python
+Fichiers : prgrm principal.py, constantes.py, n1, n2 + images
+"""
+import sys, pygame
+import random,time
+from pygame.locals import *
+from configv2 import *
+pygame.init()
+
+fenetre = pygame.display.set_mode((largeurx_fenetre,hauteury_fenetre))
+
+#importation des images communes
+fond = pygame.image.load(backgroundFile).convert()
+fond = pygame.transform.scale(fond,(dim_fond))
+
+dos = pygame.image.load(dosFile).convert_alpha()
+dos = pygame.transform.scale(dos,(dim_carte))
+
+#importation des cartes et ajout dans le referentiel des cartes
+liste_ref_carte = []
+
+
+bonobo = pygame.image.load(bonoboFile).convert_alpha()
+bonobo = pygame.transform.scale(bonobo,(dim_carte))
+liste_ref_carte.append(bonobo)
+
+gorille = pygame.image.load(gorilleFile).convert_alpha()
+gorille = pygame.transform.scale(gorille,(dim_carte))
+liste_ref_carte.append(gorille)
+
+gibbon = pygame.image.load(gibbonFile).convert_alpha()
+gibbon = pygame.transform.scale(gibbon,(dim_carte))
+liste_ref_carte.append(gibbon)
+
+orang_outang = pygame.image.load(orangOutangFile).convert_alpha()
+orang_outang = pygame.transform.scale(orang_outang,(dim_carte))
+liste_ref_carte.append(orang_outang)
+
+tamarin_empereur = pygame.image.load(tamarinEmpereurFile).convert_alpha()
+tamarin_empereur = pygame.transform.scale(tamarin_empereur,(dim_carte))
+liste_ref_carte.append(tamarin_empereur)
+
+nasique = pygame.image.load(nasiqueFile).convert_alpha()
+nasique = pygame.transform.scale(nasique,(dim_carte))
+liste_ref_carte.append(nasique)
+
+# un couple de carte par carte
+liste_carte = [carte for carte in range(6) for j in range (2)]
+
+# mélange de la liste
+random.shuffle(liste_carte)
+
+#liste dans tableau de jeu
+tableau_jeu = []
+for ligne in range (0,nbLigne) :
+    listeTemp = []
+    for colonne in range(0,nbColonne) :
+        listeTemp.append(liste_carte[(ligne*nbColonne) + colonne])
+    tableau_jeu.append(listeTemp)
+
+#Initialisation d'un plateau de jeu pour gérer les cartes retournées
+gest_cartes_retournees=[[0 for i in range(nbColonne)] for i in range(nbLigne)]
+
+print(gest_cartes_retournees)
+print(liste_carte) #debug
+print(tableau_jeu) #debug
+
+accueil =1
+jeu=0
+if accueil:
+    fond_accueil=pygame.image.load(accueilFile).convert()
+    fond_accueil=pygame.transform.scale(fond_accueil,(dim_fond))
+    fenetre.blit(fond_accueil,(0,0))
+    pygame.display.flip()
+while accueil:
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            continuer=0
+            accueil=0
+        if event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                accueil=0
+                jeu=1
+if jeu:
+    # affichage initial du jeu : toutes les cartes sont retournée, dos visible
+    fenetre.blit(fond, (0,0))
+    for ligne in range (0,nbLigne):
+        for colonne in range(0,nbColonne):
+            fenetre.blit(dos,(marge+(colonne*(largeurx_carte + marge)),marge+ligne*(hauteury_carte + marge)))
+pygame.display.flip()
+
+#boucle principale de jeu
+fin=0
+tour = 1
+clic=0
+chrono=0
+while jeu:
+    chrono=chrono+1/70
+    pygame.time.Clock().tick(70)
+    pygame.display.flip()
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            jeu=0
+        elif event.type == KEYDOWN and event.key == K_ESCAPE:
+                jeu=0
+            #initialisation de la page de fin du jeu
+        elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+            #recuperation de la ligne et de la colonne
+            indiceColonne = event.pos[0]//(largeurx_carte + marge)
+            indiceLigne = event.pos[1]//(hauteury_carte + marge)
+            print("indiceColonne " + str(indiceColonne) + " indiceLigne " + str(indiceLigne) )
+            #suppression de la marge
+            if ((event.pos[0] > (indiceColonne*(largeurx_carte + marge)+marge)) and (event.pos[1] > (indiceLigne*(hauteury_carte + marge)+marge))) :
+                if gest_cartes_retournees[indiceLigne][indiceColonne]==1:
+                    if tour==1:
+                        tour=1
+                    if tour==2:
+                        tour=2
+                else:
+                    #enregistrement du nombre de clic du joueur
+                    clic=clic+1
+                    # on sauvergarde sa valeur
+                    indiceCarte = tableau_jeu[indiceLigne][indiceColonne]
+                    #on indique que cette carte est retournée dans le tableau de gestion
+                    gest_cartes_retournees[indiceLigne][indiceColonne]=1
+                    print(gest_cartes_retournees)
+                    # on recherche sa reference
+                    carte = liste_ref_carte[indiceCarte]
+                    # on la retourne
+                    fenetre.blit(carte,(marge+indiceColonne*(largeurx_carte + marge),marge+indiceLigne*(hauteury_carte + marge)))
+                    if tour == 1 :
+                    # si c'est la premiere carte, on sauvergarde le contexte
+                        print("tour 1")
+                        indiceColonne1 = indiceColonne
+                        indiceLigne1 = indiceLigne
+                        indiceCarte1 = indiceCarte
+                        tour = 2
+                    else :
+                        # c'est la deuxieme carte
+                        print("tour 2")
+                        tour = 1
+                        if (indiceCarte != indiceCarte1) :
+                            # les cartes sont differentes
+                            # on garde un peu l'affichage : 5 secondes
+                            pygame.display.flip()
+                            time.sleep(0.75)
+                            # on remet les dos
+                            fenetre.blit(dos,(marge + indiceColonne1*(largeurx_carte + marge),marge + indiceLigne1*(hauteury_carte + marge)))
+                            fenetre.blit(dos,(marge + indiceColonne*(largeurx_carte + marge),marge + indiceLigne*(hauteury_carte + marge)))
+                            #on réinitialise le tableau de gestion des cartes retournées
+                            gest_cartes_retournees[indiceLigne][indiceColonne]=0
+                            gest_cartes_retournees[indiceLigne1][indiceColonne1]=0
+                #on affiche
+                pygame.display.flip()
+        if gest_cartes_retournees == [[1 for i in range(nbColonne)] for i in range(nbLigne)]:
+            chrono_final=chrono
+            jeu=0
+            fin=1
+
+while fin:
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            fin=0
+        elif event.type == KEYDOWN and event.key == K_ESCAPE:
+            fin=0
+    fond_fin=pygame.image.load(finFile).convert()
+    fond_fin=pygame.transform.scale(fond_fin,(dim_fond))
+    fenetre.blit(fond_fin,(0,0))
+    print_clic = police.render("Votre nombre de clic="+str(clic), 0, couleur_texte)
+    fenetre.blit(print_clic,(30,30) )
+    print(chrono)
+    print_chrono = police.render("Votre chrono="+str(chrono_final)+"s", 0, couleur_texte)
+    fenetre.blit(print_chrono,(30,60))
+    pygame.display.flip()
+
+pygame.quit()
