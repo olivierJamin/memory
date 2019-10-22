@@ -1,3 +1,4 @@
 projet python de jeux de solitaire
 chargement global
-fichier readme créé sur disque
+fichier readme crÃ©Ã© sur disque
+essaie de moddification sur github
